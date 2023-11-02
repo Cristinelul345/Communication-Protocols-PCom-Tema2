@@ -1,0 +1,41 @@
+
+Pentru inceput, m-am inspirat din laboratorul de PCom pt realizarea
+temei. Toate testele temei trec, exceptie facand quickflow, care pica
+ocazional. Nu stiu exact care este cauza acestui lucru; pentru valori
+mai mici ale lui (n != 30) am obtinut rezultate mai bune.
+
+Pentru transferul de mesaje peste TCP si UDP am folosit 2 structuri;
+UDP_MSG_STRUCT si TCP_MSG_STRUCT care sunt prezente atat in client/
+subscriber, cat si in serer. Mesajul de tip udp are ca si continut
+un payload de 1500 caractere, ip address si port.
+Pentru stoca oamenii abonati la topicuri, folosesc un map, ce contine
+vector de topicuri, iar topicurile avand in structura lor oamenii
+abonati la ea. De asemenea, mai folosesc un map separat special pentru
+acei abonati care au fost abonati la un moment dat cu SF = 1;
+dar s-au deconectat. 
+Structura de comunicare peste protocolul tcp este TCP_MESSAGE_STRUCT
+si contine un boolean cu tipul de comunicatie dorita(subscribe/unsubscribe)
+si variabila de store-forward cu semnificatia de mai sus.
+
+
+Pentru a putea citi in client atat de la intrarea standard, cat si de la
+server care trimite mesaje (de ex mesaj de exit), am folosit multiplexarea
+cu fd_set-uri. 
+
+Cand clientul primeste mesaj de la server, acesta verifica daca este
+de exit(serverul ii spune sa se inchida) sau nu.
+Daca nu este, inseamna ca serverul ii trimite practic mesajele la care
+era abonat. Clientul va prelucra aceste mesaje in functie de tipul lor;
+si le va afisa la consola.
+
+
+Serverul va asculta atat pe socket de tcp, cat si pe socket de tcp
+sau standard input. Daca primeste de la standard input inseamna ca
+poate avea o comanda de exit. Daca da, serverul se inchide si va
+inchide la randul lui si toti clientii care comunicau in acel moment cu el.
+Daca primeste de la socket-ul asociat cu UDP, atunci va parsa noul topic
+adaugat. Daca primeste de la socket-ul de TCP inseamna ca urmeaza o cerere
+de abonare/dezabonare a unui client. Cand se aboneaza se verifica daca a mai
+fost deja sau nu. Daca a mai fost deja, se trimit clientului si ce mai avea
+in storage-ul auxiliar de mesaje(mesajele salvate cu mecanismul de store
+forward). Altfel pur si simplu se adauga ca subscriber nou.
